@@ -52,7 +52,7 @@ const Header = () => {
               <Link href="/register">Register Team</Link>
             </FnButton>
             <FnButton asChild tone="yellow">
-              <Link href="/register">Sign In</Link>
+              <Link href="/api/auth/login">Sign In</Link>
             </FnButton>
           </div>
         </div>

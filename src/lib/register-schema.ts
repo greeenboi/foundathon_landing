@@ -2,8 +2,13 @@ import { z } from "zod";
 
 const contactNumberSchema = z
   .number()
-  .min(10, "Valid contact is required. Too Short.")
-  .max(10, "Contact must be 10 digits (without 0 and +91).");
+  .int("Contact must be an integer")
+  .refine((val) => {
+    const str = val.toString();
+    return str.length === 10 && /^[6-9]/.test(str);
+  }, {
+    message: "Please enter a valid 10-digit mobile number.",
+  });
 
 export const srmMemberSchema = z.object({
   name: z
