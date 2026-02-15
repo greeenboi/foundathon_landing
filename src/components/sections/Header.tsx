@@ -51,6 +51,9 @@ const Header = () => {
             <FnButton asChild tone="blue">
               <Link href="/register">Register Team</Link>
             </FnButton>
+            <FnButton asChild tone="yellow">
+              <Link href="/register">Sign In</Link>
+            </FnButton>
           </div>
         </div>
       </div>

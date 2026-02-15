@@ -4,7 +4,15 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FnButton } from "@/components/ui/fn-button";
 import { toast } from "@/hooks/use-toast";
-import { type NonSrmMember, nonSrmMemberSchema, type SrmMember, srmMemberSchema, type TeamRecord, teamSubmissionSchema } from "@/lib/register-schema";
+import {
+  type NonSrmMember,
+  nonSrmMemberSchema,
+  type SrmMember,
+  srmMemberSchema,
+  type TeamRecord,
+  teamSubmissionSchema,
+} from "@/lib/register-schema";
+import { Plus, PlusIcon, Trash2 } from "lucide-react";
 
 type TeamType = "srm" | "non_srm";
 
@@ -475,8 +483,13 @@ const Register = () => {
                         <td className="py-2 pr-3">{getCurrentMemberId(member)}</td>
                         <td className="py-2">{member.contact}</td>
                         <td className="py-2 pl-2 text-right">
-                          <FnButton type="button" onClick={() => removeMember(index)} tone="red" size="xs">
-                            Remove
+                          <FnButton
+                            type="button"
+                            onClick={() => removeMember(index)}
+                            tone="red"
+                            size="xs"
+                          >
+                            <Trash2 size={4} strokeWidth={3} />
                           </FnButton>
                         </td>
                       </tr>
@@ -531,25 +544,18 @@ const MemberDraftCard = ({
 }) => (
   <div className="mt-6 rounded-xl border border-foreground/10 bg-linear-to-b from-gray-100 to-gray-50 p-4 md:p-5 shadow-sm">
     <div className="flex items-center justify-between gap-3 mb-3 h-13">
-      <p className="text-base font-bold uppercase tracking-[0.08em]">Add Member Individually</p>
-      <FnButton type="button" onClick={onAdd} disabled={!canAddMember} tone="green" size="sm">
-        <span className="hidden sm:inline">Add Member</span>
-        <span className="sm:hidden">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="M5 12h14" />
-            <path d="M12 5v14" />
-          </svg>
-        </span>
+      <p className="text-base font-bold uppercase tracking-[0.08em]">
+        Add Member Individually
+      </p>
+      <FnButton
+        type="button"
+        onClick={onAdd}
+        disabled={!canAddMember}
+        tone="green"
+        size="sm"
+      >
+        <PlusIcon size={16} strokeWidth={3} />
+        Add Member
       </FnButton>
     </div>
     {children}
