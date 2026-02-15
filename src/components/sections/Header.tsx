@@ -147,7 +147,12 @@ const Header = () => {
               </FnButton>
             )}
             {isSignedIn ? (
-              <FnButton tone={"yellow"}>
+              <FnButton
+                tone={"yellow"}
+                type="button"
+                aria-label="Open account menu"
+                title="Account"
+              >
                 <User size={20} strokeWidth={3} />
               </FnButton>
             ) : (
