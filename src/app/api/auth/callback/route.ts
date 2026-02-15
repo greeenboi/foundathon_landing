@@ -7,11 +7,10 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
   // if "next" is in param, use it as the redirect URL
-  let next = searchParams.get('next') ?? '/'
-  if (!next.startsWith('/')) {
-    // if "next" is not a relative URL, use the default
-    next = '/'
-  }
+  const nextParam = searchParams.get('next')
+  // Allow only safe, internal paths like "/foo/bar-baz"
+  const isSafeNext = !!nextParam && /^\/[a-zA-Z0-9_\-\/]*$/.test(nextParam)
+  let next = isSafeNext ? nextParam as string : '/'
 
   if (code) {
     const cookieStore = cookies()
