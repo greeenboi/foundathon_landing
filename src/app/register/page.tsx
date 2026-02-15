@@ -617,7 +617,7 @@ const Register = () => {
                             tone="red"
                             size="xs"
                           >
-                            <Trash2 size={4} strokeWidth={3} />
+                            <Trash2 size={16} strokeWidth={3} />
                           </FnButton>
                         </td>
                       </tr>
