@@ -1,6 +1,7 @@
-import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { FnButton } from "@/components/ui/fn-button";
+import { getAuthUiState } from "@/lib/auth-ui-state";
+import HeroRegisterButton from "./HeroRegisterButton";
 
 const content = {
   caption: "Foundathon 3.0 | Monopoly Edition | 2026",
@@ -12,7 +13,9 @@ const content = {
   secondaryButtonText: "Problem Statements",
 };
 
-const Hero = () => {
+const Hero = async () => {
+  const { isSignedIn, teamId } = await getAuthUiState();
+
   return (
     <section
       id="overview"
@@ -52,12 +55,11 @@ const Hero = () => {
             {content.description}
           </p>
           <div className="flex items-center mt-6 gap-4 flex-wrap justify-center">
-            <FnButton asChild tone="red" size="lg">
-              <Link href="/register">
-                {content.primaryButtonText}
-                <ArrowRight />
-              </Link>
-            </FnButton>
+            <HeroRegisterButton
+              initialIsSignedIn={isSignedIn}
+              initialTeamId={teamId}
+              label={content.primaryButtonText}
+            />
             <FnButton asChild tone="gray" size="lg" className="border-fnblue">
               <Link href="/problem-statements">
                 {content.secondaryButtonText}

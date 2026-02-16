@@ -106,8 +106,9 @@ const Register = () => {
       setTeams(data.teams || []);
     } catch {
       toast({
-        title: "Status Update",
-        description: "Failed to load local team records.",
+        title: "Unable to Load Saved Teams",
+        description:
+          "We couldn't fetch your saved registrations. You can continue filling the form and retry.",
         variant: "destructive",
       });
     } finally {
@@ -150,9 +151,10 @@ const Register = () => {
       const parsed = srmMemberSchema.safeParse(memberDraftSrm);
       if (!parsed.success) {
         toast({
-          title: "Validation Error",
+          title: "Member Details Invalid",
           description:
-            parsed.error.issues[0]?.message ?? "Invalid member details.",
+            parsed.error.issues[0]?.message ??
+            "Please correct member details before adding.",
           variant: "destructive",
         });
         return;
@@ -163,9 +165,10 @@ const Register = () => {
       const parsed = nonSrmMemberSchema.safeParse(memberDraftNonSrm);
       if (!parsed.success) {
         toast({
-          title: "Validation Error",
+          title: "Member Details Invalid",
           description:
-            parsed.error.issues[0]?.message ?? "Invalid member details.",
+            parsed.error.issues[0]?.message ??
+            "Please correct member details before adding.",
           variant: "destructive",
         });
         return;
@@ -175,8 +178,9 @@ const Register = () => {
     }
 
     toast({
-      title: "Status Update",
-      description: "Member added to preview.",
+      title: "Member Added to Draft",
+      description:
+        "Member is added locally. Click Create Team to submit the final registration.",
       variant: "success",
     });
   };
@@ -202,8 +206,9 @@ const Register = () => {
       setNonSrmMeta(emptyNonSrmMeta());
     }
     toast({
-      title: "Status Update",
-      description: "Current form cleared.",
+      title: "Form Reset Complete",
+      description:
+        "Current team details were cleared. You can start entering team information again.",
       variant: "success",
     });
   };
@@ -230,9 +235,10 @@ const Register = () => {
     const parsed = teamSubmissionSchema.safeParse(payload);
     if (!parsed.success) {
       toast({
-        title: "Validation Error",
+        title: "Team Details Invalid",
         description:
-          parsed.error.issues[0]?.message ?? "Please check entered details.",
+          parsed.error.issues[0]?.message ??
+          "Please fix the team details and try again.",
         variant: "destructive",
       });
       return;
@@ -253,8 +259,10 @@ const Register = () => {
 
       if (!res.ok || !data.team?.id) {
         toast({
-          title: "Validation Error",
-          description: data.error ?? "Failed to save team.",
+          title: "Team Registration Failed",
+          description:
+            data.error ??
+            "We couldn't create your team registration. Please try again.",
           variant: "destructive",
         });
         return;
@@ -274,8 +282,9 @@ const Register = () => {
       router.push(`/register/success/${data.team.id}`);
     } catch {
       toast({
-        title: "Validation Error",
-        description: "Network error while saving team.",
+        title: "Save Request Failed",
+        description:
+          "Network issue while creating your team. Check your connection and retry.",
         variant: "destructive",
       });
     } finally {
@@ -283,32 +292,34 @@ const Register = () => {
     }
   };
 
-  const deleteTeam = async (id: string) => {
-    try {
-      const res = await fetch(`/api/register?id=${id}`, { method: "DELETE" });
-      const data = (await res.json()) as { teams?: TeamSummary[] };
-      if (!res.ok) {
-        toast({
-          title: "Error",
-          description: "Failed to delete team.",
-          variant: "destructive",
-        });
-        return;
-      }
-      setTeams(data.teams ?? []);
-      toast({
-        title: "Status Update",
-        description: "Saved team removed.",
-        variant: "success",
-      });
-    } catch {
-      toast({
-        title: "Error",
-        description: "Network error while deleting team.",
-        variant: "destructive",
-      });
-    }
-  };
+  // const deleteTeam = async (id: string) => {
+  //   try {
+  //     const res = await fetch(`/api/register?id=${id}`, { method: "DELETE" });
+  //     const data = (await res.json()) as { teams?: TeamSummary[] };
+  //     if (!res.ok) {
+  //       toast({
+  //         title: "Delete Failed",
+  //         description:
+  //           "We couldn't remove this saved team entry. Please try again.",
+  //         variant: "destructive",
+  //       });
+  //       return;
+  //     }
+  //     setTeams(data.teams ?? []);
+  //     toast({
+  //       title: "Saved Team Removed",
+  //       description: "The selected saved team entry was deleted.",
+  //       variant: "success",
+  //     });
+  //   } catch {
+  //     toast({
+  //       title: "Delete Request Failed",
+  //       description:
+  //         "Network issue while deleting the saved team. Please retry.",
+  //       variant: "destructive",
+  //     });
+  //   }
+  // };
 
   return (
     <main className="min-h-screen bg-gray-200 text-foreground relative overflow-hidden">

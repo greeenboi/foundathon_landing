@@ -34,8 +34,10 @@ export default function RegistrationSuccessPage() {
 
         if (!res.ok || !data.team) {
           toast({
-            title: "Error",
-            description: data.error ?? "Failed to load team data",
+            title: "Unable to Load Team Summary",
+            description:
+              data.error ??
+              "Your registration was successful, but we couldn't fetch team details right now.",
             variant: "destructive",
           });
           return;
@@ -44,11 +46,11 @@ export default function RegistrationSuccessPage() {
         setTeam(data.team);
       } catch (error) {
         toast({
-          title: "Error",
+          title: "Team Summary Request Failed",
           description:
             error instanceof Error
               ? error.message
-              : "Failed to load team data",
+              : "Network issue while loading your registered team details. Please refresh and try again.",
           variant: "destructive",
         });
       } finally {
@@ -120,7 +122,7 @@ export default function RegistrationSuccessPage() {
                 Team Name
               </p>
               <p className="text-sm md:text-base font-bold mt-1">
-                {isLoading ? "Loading..." : team?.teamName ?? "N/A"}
+                {isLoading ? "Loading..." : (team?.teamName ?? "N/A")}
               </p>
             </div>
 
@@ -129,7 +131,7 @@ export default function RegistrationSuccessPage() {
                 Lead Name
               </p>
               <p className="text-sm md:text-base font-bold mt-1">
-                {isLoading ? "Loading..." : team?.lead.name ?? "N/A"}
+                {isLoading ? "Loading..." : (team?.lead.name ?? "N/A")}
               </p>
             </div>
 

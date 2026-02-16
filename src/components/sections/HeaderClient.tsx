@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FnButton } from "@/components/ui/fn-button";
 import { LineShadowText } from "@/components/ui/line-shadow-text";
+import SignInRequiredModal from "@/components/ui/sign-in-required-modal";
 import { ConfettiButton } from "../ui/confetti-button";
 
 type HeaderClientProps = {
@@ -192,39 +193,11 @@ const HeaderClient = ({
         </div>
       </div>
 
-      {showSignInPrompt && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 px-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="sign-in-required-title"
-        >
-          <div className="w-full max-w-md rounded-2xl border bg-background p-6 shadow-2xl border-b-4 border-fnblue">
-            <p
-              id="sign-in-required-title"
-              className="text-sm uppercase tracking-[0.18em] font-bold text-fnblue"
-            >
-              Sign In Required
-            </p>
-            <p className="mt-3 text-sm text-foreground/80">
-              Please sign in to register your team for Foundathon.
-            </p>
-            <div className="mt-6 flex justify-end gap-2">
-              <FnButton
-                type="button"
-                onClick={() => setShowSignInPrompt(false)}
-                tone="gray"
-                size="sm"
-              >
-                Cancel
-              </FnButton>
-              <FnButton asChild tone="yellow" size="sm">
-                <Link href={signInToRegisterHref}>Sign In</Link>
-              </FnButton>
-            </div>
-          </div>
-        </div>
-      )}
+      <SignInRequiredModal
+        open={showSignInPrompt}
+        onOpenChange={setShowSignInPrompt}
+        signInHref={signInToRegisterHref}
+      />
     </>
   );
 };

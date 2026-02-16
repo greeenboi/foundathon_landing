@@ -1,12 +1,12 @@
 "use client";
 
+import { PlusIcon, Trash2, UserRoundPen } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { FnButton } from "@/components/ui/fn-button";
 import { toast } from "@/hooks/use-toast";
 import { type NonSrmMember, nonSrmMemberSchema, type SrmMember, srmMemberSchema, type TeamRecord, teamSubmissionSchema } from "@/lib/register-schema";
-import { PlusIcon, Trash2, UserRoundPen } from "lucide-react";
 
 type TeamType = "srm" | "non_srm";
 
@@ -90,8 +90,10 @@ export default function TeamDashboardPage() {
 
         if (!res.ok || !data.team) {
           toast({
-            title: "Validation Error",
-            description: data.error ?? "Team not found.",
+            title: "Team Not Available",
+            description:
+              data.error ??
+              "We couldn't load this team. It may have been deleted or you may not have access.",
             variant: "destructive",
           });
           return;
@@ -119,8 +121,9 @@ export default function TeamDashboardPage() {
         }
       } catch {
         toast({
-          title: "Validation Error",
-          description: "Failed to load team data.",
+          title: "Unable to Load Dashboard",
+          description:
+            "We couldn't fetch your team details. Please refresh and try again.",
           variant: "destructive",
         });
       } finally {
@@ -137,8 +140,10 @@ export default function TeamDashboardPage() {
       const parsed = srmMemberSchema.safeParse(draftSrm);
       if (!parsed.success) {
         toast({
-          title: "Validation Error",
-          description: parsed.error.issues[0]?.message ?? "Invalid member data.",
+          title: "Member Details Invalid",
+          description:
+            parsed.error.issues[0]?.message ??
+            "Please correct member details before adding.",
           variant: "destructive",
         });
         return;
@@ -146,8 +151,9 @@ export default function TeamDashboardPage() {
       setMembersSrm((prev) => [...prev, parsed.data]);
       setDraftSrm(emptySrmMember());
       toast({
-        title: "Status Update",
-        description: "Member added.",
+        title: "Member Added to Draft",
+        description:
+          "The member has been added. Remember to save changes!",
         variant: "success",
       });
       return;
@@ -156,8 +162,10 @@ export default function TeamDashboardPage() {
     const parsed = nonSrmMemberSchema.safeParse(draftNonSrm);
     if (!parsed.success) {
       toast({
-        title: "Validation Error",
-        description: parsed.error.issues[0]?.message ?? "Invalid member data.",
+        title: "Member Details Invalid",
+        description:
+          parsed.error.issues[0]?.message ??
+          "Please correct member details before adding.",
         variant: "destructive",
       });
       return;
@@ -165,8 +173,9 @@ export default function TeamDashboardPage() {
     setMembersNonSrm((prev) => [...prev, parsed.data]);
     setDraftNonSrm(emptyNonSrmMember());
     toast({
-      title: "Status Update",
-      description: "Member added.",
+      title: "Member Added to Draft",
+      description:
+        "The member has been added. Remember to save changes!",
       variant: "success",
     });
   };
@@ -201,8 +210,10 @@ export default function TeamDashboardPage() {
       const parsed = srmMemberSchema.safeParse(editingSrm);
       if (!parsed.success) {
         toast({
-          title: "Validation Error",
-          description: parsed.error.issues[0]?.message ?? "Invalid member data.",
+          title: "Member Update Invalid",
+          description:
+            parsed.error.issues[0]?.message ??
+            "Please correct member details before saving this update.",
           variant: "destructive",
         });
         return;
@@ -212,8 +223,10 @@ export default function TeamDashboardPage() {
       const parsed = nonSrmMemberSchema.safeParse(editingNonSrm);
       if (!parsed.success) {
         toast({
-          title: "Validation Error",
-          description: parsed.error.issues[0]?.message ?? "Invalid member data.",
+          title: "Member Update Invalid",
+          description:
+            parsed.error.issues[0]?.message ??
+            "Please correct member details before saving this update.",
           variant: "destructive",
         });
         return;
@@ -222,8 +235,9 @@ export default function TeamDashboardPage() {
     }
 
     toast({
-      title: "Status Update",
-      description: "Member updated.",
+      title: "Member Draft Updated",
+      description:
+        "Member changes are valid. Remember to save changes!.",
       variant: "success",
     });
     cancelEditMember();
@@ -251,8 +265,10 @@ export default function TeamDashboardPage() {
     const parsed = teamSubmissionSchema.safeParse(payload);
     if (!parsed.success) {
       toast({
-        title: "Validation Error",
-        description: parsed.error.issues[0]?.message ?? "Validation failed.",
+        title: "Team Details Invalid",
+        description:
+          parsed.error.issues[0]?.message ??
+          "Please fix the team details and try again.",
         variant: "destructive",
       });
       return;
@@ -269,8 +285,9 @@ export default function TeamDashboardPage() {
 
       if (!res.ok || !data.team) {
         toast({
-          title: "Validation Error",
-          description: data.error ?? "Failed to save changes.",
+          title: "Could Not Save Team",
+          description:
+            data.error ?? "We couldn't save your team changes. Please try again.",
           variant: "destructive",
         });
         return;
@@ -278,14 +295,15 @@ export default function TeamDashboardPage() {
 
       setUpdatedAt(data.team.updatedAt);
       toast({
-        title: "Status Update",
-        description: "Changes saved to JSON.",
+        title: "Team Changes Saved",
+        description: "Your latest team details have been saved successfully.",
         variant: "success",
       });
     } catch {
       toast({
-        title: "Validation Error",
-        description: "Network error while saving.",
+        title: "Save Request Failed",
+        description:
+          "Network issue while saving team changes. Please check connection and retry.",
         variant: "destructive",
       });
     } finally {
@@ -297,18 +315,25 @@ export default function TeamDashboardPage() {
     try {
       const res = await fetch(`/api/register/${teamId}`, { method: "DELETE" });
       if (res.ok) {
+        toast({
+          title: "Team Deleted",
+          description:
+            "The team was removed successfully. Redirecting to registration page.",
+          variant: "success",
+        });
         router.push("/register");
         return;
       }
       toast({
-        title: "Validation Error",
-        description: "Failed to delete team.",
+        title: "Team Deletion Failed",
+        description: "We couldn't delete this team right now. Please try again later.",
         variant: "destructive",
       });
     } catch {
       toast({
-        title: "Validation Error",
-        description: "Failed to delete team.",
+        title: "Delete Request Failed",
+        description:
+          "Network issue while deleting the team. Please check connection and retry.",
         variant: "destructive",
       });
     }
