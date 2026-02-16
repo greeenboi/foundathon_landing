@@ -4,7 +4,10 @@ import { cookies } from "next/headers";
 
 export async function GET() {
   // const url = 'https://foundathon.thefoundersclub.tech/'
-  const url = 'http://localhost:3000'
+  // const url = 'http://localhost:3000'
+
+  const url = ( process.env.NODE_ENV === "development" ) ? "http://localhost:3000" : "https://foundathon.thefoundersclub.tech/";
+
   const cookieStore = await cookies();
 
   const supabase = createServerClient(
