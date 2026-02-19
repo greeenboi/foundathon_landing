@@ -3,7 +3,7 @@
 import { PlusIcon, Trash2, UserRoundPen } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { FnButton } from "@/components/ui/fn-button";
 import { useRouteProgress } from "@/components/ui/route-progress";
 import { toast } from "@/hooks/use-toast";
@@ -28,6 +28,16 @@ type ProblemStatementInfo = {
   cap: number | null;
   id: string;
   lockedAt: string;
+  title: string;
+};
+
+type ProblemStatementAvailability = {
+  cap: number;
+  id: string;
+  isFull: boolean;
+  registeredCount: number;
+  remaining: number;
+  summary: string;
   title: string;
 };
 
@@ -92,6 +102,10 @@ export default function TeamDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isAssigningStatement, setIsAssigningStatement] = useState(false);
+  const [isLoadingStatements, setIsLoadingStatements] = useState(false);
+  const [isLockingProblemStatementId, setIsLockingProblemStatementId] =
+    useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loadErrorIsAuth, setLoadErrorIsAuth] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -99,6 +113,9 @@ export default function TeamDashboardPage() {
   const [createdAt, setCreatedAt] = useState("");
   const [problemStatement, setProblemStatement] =
     useState<ProblemStatementInfo>(emptyProblemStatement());
+  const [problemStatements, setProblemStatements] = useState<
+    ProblemStatementAvailability[]
+  >([]);
   const [updatedAt, setUpdatedAt] = useState("");
 
   const currentMembers = teamType === "srm" ? membersSrm : membersNonSrm;
@@ -127,6 +144,72 @@ export default function TeamDashboardPage() {
         .length
     );
   }, [leadNonSrm, leadSrm, membersNonSrm, membersSrm, teamType]);
+
+  const teamPayload = useMemo(
+    () =>
+      teamType === "srm"
+        ? {
+            teamType: "srm" as const,
+            teamName,
+            lead: leadSrm,
+            members: membersSrm,
+          }
+        : {
+            teamType: "non_srm" as const,
+            teamName,
+            collegeName: metaNonSrm.collegeName,
+            isClub: metaNonSrm.isClub,
+            clubName: metaNonSrm.isClub ? metaNonSrm.clubName : "",
+            lead: leadNonSrm,
+            members: membersNonSrm,
+          },
+    [
+      leadNonSrm,
+      leadSrm,
+      membersNonSrm,
+      membersSrm,
+      metaNonSrm.clubName,
+      metaNonSrm.collegeName,
+      metaNonSrm.isClub,
+      teamName,
+      teamType,
+    ],
+  );
+
+  const loadProblemStatements = useCallback(async () => {
+    setIsLoadingStatements(true);
+    try {
+      const response = await fetch("/api/problem-statements", {
+        method: "GET",
+      });
+      const data = (await response.json()) as {
+        error?: string;
+        statements?: ProblemStatementAvailability[];
+      };
+
+      if (!response.ok || !data.statements) {
+        toast({
+          title: "Unable to Load Problem Statements",
+          description:
+            data.error ??
+            "We couldn't fetch problem statement availability right now.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setProblemStatements(data.statements);
+    } catch {
+      toast({
+        title: "Problem Statement Request Failed",
+        description:
+          "Network issue while loading problem statements. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingStatements(false);
+    }
+  }, []);
 
   useEffect(() => {
     const recoverWithLatestTeam = async () => {
@@ -236,6 +319,14 @@ export default function TeamDashboardPage() {
 
     void loadTeam();
   }, [router, startRouteProgress, teamId]);
+
+  useEffect(() => {
+    if (isLoading || problemStatement.id) {
+      return;
+    }
+
+    void loadProblemStatements();
+  }, [isLoading, loadProblemStatements, problemStatement.id]);
 
   if (loadError) {
     return (
@@ -391,25 +482,7 @@ export default function TeamDashboardPage() {
   };
 
   const saveChanges = async () => {
-    const payload =
-      teamType === "srm"
-        ? {
-            teamType: "srm" as const,
-            teamName,
-            lead: leadSrm,
-            members: membersSrm,
-          }
-        : {
-            teamType: "non_srm" as const,
-            teamName,
-            collegeName: metaNonSrm.collegeName,
-            isClub: metaNonSrm.isClub,
-            clubName: metaNonSrm.isClub ? metaNonSrm.clubName : "",
-            lead: leadNonSrm,
-            members: membersNonSrm,
-          };
-
-    const parsed = teamSubmissionSchema.safeParse(payload);
+    const parsed = teamSubmissionSchema.safeParse(teamPayload);
     if (!parsed.success) {
       const message =
         parsed.error.issues[0]?.message ??
@@ -464,6 +537,112 @@ export default function TeamDashboardPage() {
       });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const lockLegacyProblemStatement = async (problemStatementId: string) => {
+    if (problemStatement.id) {
+      return;
+    }
+
+    const parsedTeam = teamSubmissionSchema.safeParse(teamPayload);
+    if (!parsedTeam.success) {
+      const message =
+        parsedTeam.error.issues[0]?.message ??
+        "Please fix team details before locking a problem statement.";
+      setFormError(message);
+      toast({
+        title: "Team Details Invalid",
+        description: message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setFormError(null);
+    setIsLockingProblemStatementId(problemStatementId);
+    setIsAssigningStatement(true);
+
+    try {
+      const lockResponse = await fetch("/api/problem-statements/lock", {
+        body: JSON.stringify({ problemStatementId }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+
+      const lockData = (await lockResponse.json()) as {
+        error?: string;
+        lockToken?: string;
+        locked?: boolean;
+        problemStatement?: { id: string; title: string };
+      };
+
+      if (
+        !lockResponse.ok ||
+        !lockData.locked ||
+        !lockData.lockToken ||
+        !lockData.problemStatement
+      ) {
+        toast({
+          title: "Could Not Lock Problem Statement",
+          description:
+            lockData.error ??
+            "We couldn't lock this statement. Please try another one.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const patchResponse = await fetch(`/api/register/${teamId}`, {
+        body: JSON.stringify({
+          ...parsedTeam.data,
+          lockToken: lockData.lockToken,
+          problemStatementId: lockData.problemStatement.id,
+        }),
+        headers: { "Content-Type": "application/json" },
+        method: "PATCH",
+      });
+
+      const patchData = (await patchResponse.json()) as {
+        error?: string;
+        team?: TeamRecord;
+      };
+
+      if (!patchResponse.ok || !patchData.team) {
+        toast({
+          title: "Could Not Assign Problem Statement",
+          description:
+            patchData.error ??
+            "Lock succeeded but statement assignment failed. Please retry.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setUpdatedAt(patchData.team.updatedAt);
+      setProblemStatement({
+        cap: patchData.team.problemStatementCap ?? null,
+        id: patchData.team.problemStatementId ?? "",
+        lockedAt: patchData.team.problemStatementLockedAt ?? "",
+        title: patchData.team.problemStatementTitle ?? "",
+      });
+
+      toast({
+        title: "Problem Statement Assigned",
+        description: `${lockData.problemStatement.title} is now linked to this legacy team.`,
+        variant: "success",
+      });
+      await loadProblemStatements();
+    } catch {
+      toast({
+        title: "Problem Statement Assignment Failed",
+        description:
+          "Network issue while assigning statement. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAssigningStatement(false);
+      setIsLockingProblemStatementId(null);
     }
   };
 
@@ -674,6 +853,81 @@ export default function TeamDashboardPage() {
           </div>
         </section>
 
+        {!hasLockedProblemStatement ? (
+          <section className="mb-6 rounded-2xl border border-b-4 border-fnred bg-background/95 p-6 shadow-lg">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-fnred">
+              Legacy Team Action Required
+            </p>
+            <h3 className="mt-2 text-2xl font-black uppercase tracking-tight">
+              lock a problem statement now
+            </h3>
+            <p className="mt-2 text-sm text-foreground/75 md:text-base">
+              This team was registered before statement locking was introduced.
+              Choose one statement below to complete your team profile.
+            </p>
+
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              {isLoadingStatements
+                ? ["one", "two", "three", "four"].map((item) => (
+                    <div
+                      key={`legacy-statement-skeleton-${item}`}
+                      className="h-40 animate-pulse rounded-xl border border-b-4 border-fnblue/40 bg-foreground/5"
+                    />
+                  ))
+                : problemStatements.map((statement) => (
+                    <div
+                      key={statement.id}
+                      className="rounded-xl border border-b-4 border-fnblue/45 bg-white p-4 shadow-sm"
+                    >
+                      <p className="text-[10px] uppercase tracking-[0.16em] text-fnblue font-semibold">
+                        {statement.id}
+                      </p>
+                      <h4 className="mt-2 text-sm font-black uppercase tracking-[0.06em]">
+                        {statement.title}
+                      </h4>
+                      <p className="mt-2 text-xs text-foreground/75 leading-relaxed">
+                        {statement.summary}
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <span className="rounded-full border border-fnblue/30 bg-fnblue/10 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-fnblue">
+                          Filled {statement.registeredCount}/{statement.cap}
+                        </span>
+                        <span className="rounded-full border border-foreground/20 bg-foreground/5 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em]">
+                          Remaining {statement.remaining}
+                        </span>
+                      </div>
+                      <div className="mt-4">
+                        {statement.isFull ? (
+                          <FnButton type="button" tone="gray" disabled>
+                            Full
+                          </FnButton>
+                        ) : (
+                          <FnButton
+                            type="button"
+                            onClick={() =>
+                              lockLegacyProblemStatement(statement.id)
+                            }
+                            disabled={
+                              isAssigningStatement ||
+                              isSaving ||
+                              isDeleting ||
+                              isLoading
+                            }
+                            loading={
+                              isLockingProblemStatementId === statement.id
+                            }
+                            loadingText="Locking..."
+                          >
+                            Lock and Assign
+                          </FnButton>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+            </div>
+          </section>
+        ) : null}
+
         <section className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard label="Team Type" value={teamTypeLabel} tone="blue" />
           <StatCard
@@ -848,7 +1102,7 @@ export default function TeamDashboardPage() {
               <FnButton
                 type="button"
                 onClick={addMember}
-                disabled={!canAddMember}
+                disabled={!canAddMember || isAssigningStatement}
                 tone="green"
               >
                 <PlusIcon size={16} strokeWidth={3} />
@@ -859,7 +1113,7 @@ export default function TeamDashboardPage() {
                 onClick={saveChanges}
                 loading={isSaving}
                 loadingText="Saving..."
-                disabled={isSaving || isDeleting}
+                disabled={isSaving || isDeleting || isAssigningStatement}
               >
                 Save Changes
               </FnButton>
@@ -867,7 +1121,7 @@ export default function TeamDashboardPage() {
                 type="button"
                 onClick={() => setShowDeleteConfirm(true)}
                 tone="red"
-                disabled={isDeleting}
+                disabled={isDeleting || isAssigningStatement}
               >
                 <Trash2 size={16} strokeWidth={3} />
                 Delete Team
