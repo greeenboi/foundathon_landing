@@ -4,6 +4,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   createProblemLockToken: vi.fn(),
   createSupabaseClient: vi.fn(),
+  getProblemStatementById: vi.fn(),
+  problemStatementCap: vi.fn(),
   getSupabaseCredentials: vi.fn(),
 }));
 
@@ -18,11 +20,18 @@ vi.mock("@/lib/problem-lock-token", () => ({
   createProblemLockToken: mocks.createProblemLockToken,
 }));
 
+vi.mock("@/data/problem-statements", () => ({
+  getProblemStatementById: mocks.getProblemStatementById,
+  PROBLEM_STATEMENT_CAP: mocks.problemStatementCap(),
+}));
+
 describe("/api/problem-statements/lock POST", () => {
   beforeEach(() => {
     vi.resetModules();
 
     mocks.createSupabaseClient.mockReset();
+    mocks.getProblemStatementById.mockReset();
+    mocks.problemStatementCap.mockReset();
     mocks.getSupabaseCredentials.mockReset();
     mocks.createProblemLockToken.mockReset();
 
@@ -35,9 +44,31 @@ describe("/api/problem-statements/lock POST", () => {
       expiresAt: "2026-02-20T00:00:00.000Z",
       token: "token-1",
     });
+    mocks.problemStatementCap.mockReturnValue(10);
+    mocks.getProblemStatementById.mockImplementation((id: string) => {
+      if (id !== "ps-01") {
+        return null;
+      }
+
+      return {
+        id: "ps-01",
+        summary: "Summary",
+        title: "Campus Mobility Optimizer",
+      };
+    });
   });
 
   it("rejects unknown problem statement ids", async () => {
+    mocks.createSupabaseClient.mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: "user-1" } },
+          error: null,
+        }),
+      },
+      from: vi.fn(),
+    });
+
     const { POST } = await import("./route");
     const request = new NextRequest(
       "http://localhost/api/problem-statements/lock",
@@ -53,7 +84,6 @@ describe("/api/problem-statements/lock POST", () => {
 
     expect(response.status).toBe(400);
     expect(body.error).toContain("not found");
-    expect(mocks.createSupabaseClient).not.toHaveBeenCalled();
   });
 
   it("rejects full problem statements", async () => {
@@ -90,7 +120,44 @@ describe("/api/problem-statements/lock POST", () => {
     const body = await response.json();
 
     expect(response.status).toBe(409);
-    expect(body.error).toContain("cap");
+    expect(body.error).toBe("This problem statement is currently unavailable.");
+  });
+
+  it("rejects over-cap problem statements", async () => {
+    const overCapRows = Array.from({ length: 11 }).map(() => ({
+      details: { problemStatementId: "ps-01" },
+    }));
+
+    const eqByEvent = vi
+      .fn()
+      .mockResolvedValue({ data: overCapRows, error: null });
+    const select = vi.fn().mockReturnValue({ eq: eqByEvent });
+
+    mocks.createSupabaseClient.mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: "user-1" } },
+          error: null,
+        }),
+      },
+      from: vi.fn().mockReturnValue({ select }),
+    });
+
+    const { POST } = await import("./route");
+    const request = new NextRequest(
+      "http://localhost/api/problem-statements/lock",
+      {
+        body: JSON.stringify({ problemStatementId: "ps-01" }),
+        headers: { "content-type": "application/json" },
+        method: "POST",
+      },
+    );
+
+    const response = await POST(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.error).toBe("This problem statement is currently unavailable.");
   });
 
   it("returns 500 when lock token generation fails", async () => {

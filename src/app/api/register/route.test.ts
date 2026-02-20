@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   createSupabaseClient: vi.fn(),
+  getProblemStatementById: vi.fn(),
+  problemStatementCap: vi.fn(),
   getSupabaseCredentials: vi.fn(),
   toTeamSummary: vi.fn(),
   verifyProblemLockToken: vi.fn(),
@@ -23,6 +25,11 @@ vi.mock("@/lib/register-api", () => ({
 
 vi.mock("@/lib/problem-lock-token", () => ({
   verifyProblemLockToken: mocks.verifyProblemLockToken,
+}));
+
+vi.mock("@/data/problem-statements", () => ({
+  getProblemStatementById: mocks.getProblemStatementById,
+  PROBLEM_STATEMENT_CAP: mocks.problemStatementCap(),
 }));
 
 const row = {
@@ -74,6 +81,8 @@ describe("/api/register route", () => {
   beforeEach(() => {
     vi.resetModules();
     mocks.createSupabaseClient.mockReset();
+    mocks.getProblemStatementById.mockReset();
+    mocks.problemStatementCap.mockReset();
     mocks.getSupabaseCredentials.mockReset();
     mocks.toTeamSummary.mockReset();
     mocks.verifyProblemLockToken.mockReset();
@@ -88,6 +97,18 @@ describe("/api/register route", () => {
     mocks.verifyProblemLockToken.mockReturnValue({
       payload: { iat: Date.parse("2026-02-19T08:00:00.000Z") },
       valid: true,
+    });
+    mocks.problemStatementCap.mockReturnValue(10);
+    mocks.getProblemStatementById.mockImplementation((id: string) => {
+      if (id !== "ps-01") {
+        return null;
+      }
+
+      return {
+        id: "ps-01",
+        summary: "Summary",
+        title: "Campus Mobility Optimizer",
+      };
     });
   });
 
@@ -302,7 +323,7 @@ describe("/api/register route", () => {
     const body = await res.json();
 
     expect(res.status).toBe(409);
-    expect(body.error).toContain("cap");
+    expect(body.error).toBe("This problem statement is currently unavailable.");
     expect(insert).not.toHaveBeenCalled();
   });
 
@@ -354,7 +375,7 @@ describe("/api/register route", () => {
     const body = await res.json();
 
     expect(res.status).toBe(409);
-    expect(body.error).toContain("cap");
+    expect(body.error).toBe("This problem statement is currently unavailable.");
     expect(insert).not.toHaveBeenCalled();
   });
 

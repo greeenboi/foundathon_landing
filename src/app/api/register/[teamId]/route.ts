@@ -262,6 +262,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     const problemStatement = getProblemStatementById(
       lockPayloadParsed.data.problemStatementId,
     );
+
     if (!problemStatement) {
       return NextResponse.json(
         { error: "Problem statement not found." },
@@ -306,7 +307,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
     if (registeredCount >= PROBLEM_STATEMENT_CAP) {
       return NextResponse.json(
-        { error: "This problem statement has reached its registration cap." },
+        { error: "This problem statement is currently unavailable." },
         { status: 409, headers: JSON_HEADERS },
       );
     }

@@ -73,16 +73,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const problemStatement = getProblemStatementById(
-    parsed.data.problemStatementId,
-  );
-  if (!problemStatement) {
-    return NextResponse.json(
-      { error: "Problem statement not found." },
-      { headers: JSON_HEADERS, status: 400 },
-    );
-  }
-
   const credentials = getSupabaseCredentials();
   if (!credentials) {
     return missingSupabaseConfigResponse();
@@ -98,6 +88,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { error: "Unauthorized" },
       { headers: JSON_HEADERS, status: 401 },
+    );
+  }
+
+  const problemStatement = getProblemStatementById(parsed.data.problemStatementId);
+
+  if (!problemStatement) {
+    return NextResponse.json(
+      { error: "Problem statement not found." },
+      { headers: JSON_HEADERS, status: 400 },
     );
   }
 
@@ -123,7 +122,7 @@ export async function POST(request: NextRequest) {
 
   if (registeredCount >= PROBLEM_STATEMENT_CAP) {
     return NextResponse.json(
-      { error: "This problem statement has reached its registration cap." },
+      { error: "This problem statement is currently unavailable." },
       { headers: JSON_HEADERS, status: 409 },
     );
   }

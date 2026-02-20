@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { FnButton } from "@/components/ui/fn-button";
-import {
-  PROBLEM_STATEMENT_CAP,
-  PROBLEM_STATEMENTS,
-} from "@/data/problem-statements";
+import { PROBLEM_STATEMENTS } from "@/data/problem-statements";
 
 export default function ProblemStatementsPage() {
+  const statements = PROBLEM_STATEMENTS;
+
   return (
     <main className="min-h-screen bg-gray-200 text-foreground relative overflow-hidden">
       <div
@@ -41,11 +40,9 @@ export default function ProblemStatementsPage() {
                 Lock Rules
               </p>
               <ul className="mt-2 space-y-1 text-sm text-foreground/80">
-                <li>
-                  Each statement supports up to {PROBLEM_STATEMENT_CAP} teams.
-                </li>
                 <li>Team creation is enabled only after a successful lock.</li>
                 <li>Statement assignment is saved with your team record.</li>
+                <li>Each team can lock one statement per registration.</li>
               </ul>
             </div>
 
@@ -62,11 +59,8 @@ export default function ProblemStatementsPage() {
               <p className="text-xs uppercase tracking-[0.18em] text-fnblue font-semibold">
                 Available Problem Statements
               </p>
-              <p className="mt-1 text-sm text-foreground/70">
-                Current cap: {PROBLEM_STATEMENT_CAP} teams per statement.
-              </p>
               <div className="mt-4 grid gap-3 md:grid-cols-2">
-                {PROBLEM_STATEMENTS.map((statement) => (
+                {statements.map((statement) => (
                   <div
                     key={statement.id}
                     className="rounded-lg border border-foreground/12 bg-background/90 p-3"

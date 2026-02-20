@@ -31,11 +31,8 @@ type NonSrmMeta = {
 };
 
 type ProblemStatementAvailability = {
-  cap: number;
   id: string;
   isFull: boolean;
-  registeredCount: number;
-  remaining: number;
   summary: string;
   title: string;
 };
@@ -894,8 +891,7 @@ const RegisterClient = () => {
                     </p>
                   </div>
                   <p className="mt-2 text-sm text-foreground/70">
-                    Lock one statement to continue. Current cap is 10 teams per
-                    statement.
+                    Lock one statement to continue.
                   </p>
                 </div>
 
@@ -952,15 +948,6 @@ const RegisterClient = () => {
                           <p className="mt-2 text-sm text-foreground/75 leading-relaxed">
                             {statement.summary}
                           </p>
-
-                          <div className="mt-4 flex flex-wrap gap-2">
-                            <span className="rounded-full border border-fnblue/25 bg-fnblue/10 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-fnblue">
-                              Filled {statement.registeredCount}/{statement.cap}
-                            </span>
-                            <span className="rounded-full border border-foreground/20 bg-foreground/5 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em]">
-                              Remaining {statement.remaining}
-                            </span>
-                          </div>
 
                           <div className="mt-4">
                             {isLockedCard ? (

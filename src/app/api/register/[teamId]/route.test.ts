@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   createSupabaseClient: vi.fn(),
   getProblemStatementById: vi.fn(),
+  problemStatementCap: vi.fn(),
   getSupabaseCredentials: vi.fn(),
   toTeamRecord: vi.fn(),
   verifyProblemLockToken: vi.fn(),
@@ -21,13 +22,13 @@ vi.mock("@/lib/register-api", () => ({
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
 }));
 
-vi.mock("@/data/problem-statements", () => ({
-  getProblemStatementById: mocks.getProblemStatementById,
-  PROBLEM_STATEMENT_CAP: 10,
-}));
-
 vi.mock("@/lib/problem-lock-token", () => ({
   verifyProblemLockToken: mocks.verifyProblemLockToken,
+}));
+
+vi.mock("@/data/problem-statements", () => ({
+  getProblemStatementById: mocks.getProblemStatementById,
+  PROBLEM_STATEMENT_CAP: mocks.problemStatementCap(),
 }));
 
 const teamId = "11111111-1111-4111-8111-111111111111";
@@ -79,6 +80,7 @@ describe("/api/register/[teamId] route", () => {
     vi.resetModules();
     mocks.createSupabaseClient.mockReset();
     mocks.getProblemStatementById.mockReset();
+    mocks.problemStatementCap.mockReset();
     mocks.getSupabaseCredentials.mockReset();
     mocks.toTeamRecord.mockReset();
     mocks.verifyProblemLockToken.mockReset();
@@ -89,6 +91,7 @@ describe("/api/register/[teamId] route", () => {
       url: "http://localhost",
     });
     mocks.toTeamRecord.mockReturnValue(srmRecord);
+    mocks.problemStatementCap.mockReturnValue(10);
     mocks.getProblemStatementById.mockReturnValue({
       id: "ps-01",
       summary: "Summary",
@@ -356,6 +359,71 @@ describe("/api/register/[teamId] route", () => {
 
     expect(res.status).toBe(409);
     expect(body.error).toContain("already locked");
+    expect(updateRecord).not.toHaveBeenCalled();
+  });
+
+  it("PATCH blocks legacy statement lock assignment when statement is unavailable", async () => {
+    const existingMaybeSingle = vi.fn().mockResolvedValue({
+      data: {
+        ...row,
+        details: {},
+      },
+      error: null,
+    });
+    const existingSelect = vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: existingMaybeSingle,
+          }),
+        }),
+      }),
+    });
+
+    const countEq = vi.fn().mockResolvedValue({
+      data: Array.from({ length: 10 }).map(() => ({
+        details: { problemStatementId: "ps-01" },
+      })),
+      error: null,
+    });
+    const countSelect = vi.fn().mockReturnValue({ eq: countEq });
+
+    const updateRecord = vi.fn();
+    const from = vi
+      .fn()
+      .mockReturnValueOnce({ select: existingSelect })
+      .mockReturnValueOnce({ select: countSelect })
+      .mockReturnValueOnce({ update: updateRecord });
+
+    mocks.createSupabaseClient.mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: "user-1" } },
+          error: null,
+        }),
+      },
+      from,
+    });
+
+    const { PATCH } = await import("./route");
+    const req = new NextRequest(`http://localhost/api/register/${teamId}`, {
+      body: JSON.stringify({
+        teamType: "srm",
+        teamName: "Updated Team",
+        lead: srmRecord.lead,
+        members: srmRecord.members,
+        lockToken: "token-1",
+        problemStatementId: "ps-01",
+      }),
+      headers: { "content-type": "application/json" },
+      method: "PATCH",
+    });
+
+    const res = await PATCH(req, makeParams(teamId));
+    const body = await res.json();
+
+    expect(res.status).toBe(409);
+    expect(body.error).toBe("This problem statement is currently unavailable.");
     expect(updateRecord).not.toHaveBeenCalled();
   });
 

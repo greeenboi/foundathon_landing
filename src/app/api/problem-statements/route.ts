@@ -74,14 +74,10 @@ export async function GET() {
     {
       statements: PROBLEM_STATEMENTS.map((statement) => {
         const registeredCount = counts.get(statement.id) ?? 0;
-        const remaining = Math.max(PROBLEM_STATEMENT_CAP - registeredCount, 0);
 
         return {
-          cap: PROBLEM_STATEMENT_CAP,
           id: statement.id,
-          isFull: remaining === 0,
-          registeredCount,
-          remaining,
+          isFull: registeredCount >= PROBLEM_STATEMENT_CAP,
           summary: statement.summary,
           title: statement.title,
         };

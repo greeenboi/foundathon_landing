@@ -43,11 +43,8 @@ describe("Register page", () => {
           JSON.stringify({
             statements: [
               {
-                cap: 10,
                 id: "ps-01",
                 isFull: false,
-                registeredCount: 2,
-                remaining: 8,
                 summary: "Summary",
                 title: "Campus Mobility Optimizer",
               },
@@ -127,6 +124,8 @@ describe("Register page", () => {
       await screen.findByText(/single lock per onboarding draft/i),
     ).toBeInTheDocument();
     expect(screen.getByText(/Campus Mobility Optimizer/i)).toBeInTheDocument();
+    expect(screen.queryByText(/current cap/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/remaining/i)).not.toBeInTheDocument();
   });
 
   it("register page redirects signed-out users to login", async () => {

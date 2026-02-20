@@ -32,11 +32,8 @@ type ProblemStatementInfo = {
 };
 
 type ProblemStatementAvailability = {
-  cap: number;
   id: string;
   isFull: boolean;
-  registeredCount: number;
-  remaining: number;
   summary: string;
   title: string;
 };
@@ -691,9 +688,6 @@ export default function TeamDashboardPage() {
   const teamTypeLabel = teamType === "srm" ? "SRM Team" : "Non-SRM Team";
   const problemStatementTitle =
     problemStatement.title || "No problem statement selected";
-  const problemStatementCapLabel = problemStatement.cap
-    ? `${problemStatement.cap} teams max`
-    : "Cap unavailable";
   const hasLockedProblemStatement = Boolean(
     problemStatement.id || problemStatement.title,
   );
@@ -835,11 +829,6 @@ export default function TeamDashboardPage() {
                 tone="blue"
               />
               <HighlightTile
-                label="Cap"
-                value={problemStatementCapLabel}
-                tone="yellow"
-              />
-              <HighlightTile
                 label="Locked At"
                 value={formatDateTime(problemStatement.lockedAt)}
                 tone="green"
@@ -888,14 +877,6 @@ export default function TeamDashboardPage() {
                       <p className="mt-2 text-xs text-foreground/75 leading-relaxed">
                         {statement.summary}
                       </p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <span className="rounded-full border border-fnblue/30 bg-fnblue/10 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-fnblue">
-                          Filled {statement.registeredCount}/{statement.cap}
-                        </span>
-                        <span className="rounded-full border border-foreground/20 bg-foreground/5 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em]">
-                          Remaining {statement.remaining}
-                        </span>
-                      </div>
                       <div className="mt-4">
                         {statement.isFull ? (
                           <FnButton type="button" tone="gray" disabled>
