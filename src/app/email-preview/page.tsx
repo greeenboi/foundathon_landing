@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 const PREVIEW_PROPS = {
-  ctaBaseUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  ctaBaseUrl: process.env.FOUNDATHON_NEXT_PUBLIC_SITE_URL ?? "",
   leadEmail: "lead@example.com",
   leadName: "Alex Johnson",
   lockExpiresAtIso: "2026-02-21T18:30:00.000Z",

@@ -4,9 +4,9 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   const url =
-    process.env.NODE_ENV === "development"
+    process.env.FOUNDATHON_NODE_ENV === "development"
       ? "http://localhost:3000"
-      : "https://foundathon.thefoundersclub.tech";
+      : process.env.FOUNDATHON_NEXT_PUBLIC_SITE_URL;
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

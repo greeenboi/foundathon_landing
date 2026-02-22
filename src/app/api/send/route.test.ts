@@ -46,8 +46,7 @@ describe("/api/send POST", () => {
     mocks.resendSend.mockReset();
     mocks.emailTemplate.mockReturnValue("<div>Email</div>");
     process.env.FOUNDATHON_RESEND_API_KEY = "resend-key";
-    process.env.SITE_URL = "https://foundathon.example";
-    process.env.NEXT_PUBLIC_SITE_URL = "https://public-foundathon.example";
+    process.env.FOUNDATHON_NEXT_PUBLIC_SITE_URL = "https://foundathon.example";
   });
 
   it("returns sent:true for valid payload and successful provider call", async () => {
@@ -83,7 +82,7 @@ describe("/api/send POST", () => {
 
   it("uses NEXT_PUBLIC_SITE_URL when SITE_URL is missing", async () => {
     process.env.SITE_URL = "";
-    process.env.NEXT_PUBLIC_SITE_URL = "https://public-foundathon.example";
+    process.env.FOUNDATHON_NEXT_PUBLIC_SITE_URL = "https://public-foundathon.example";
     mocks.resendSend.mockResolvedValue({
       data: { id: "email-2" },
       error: null,

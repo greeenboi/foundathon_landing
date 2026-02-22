@@ -1,9 +1,7 @@
 import type { MetadataRoute } from "next";
 
 const BASE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ??
-  process.env.SITE_URL ??
-  "https://foundathon.thefoundersclub.tech";
+  process.env.FOUNDATHON_NEXT_PUBLIC_SITE_URL ?? "";
 
 const routes: Array<{ path: string; priority?: number }> = [
   { path: "/", priority: 1.0 },

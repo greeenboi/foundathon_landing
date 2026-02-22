@@ -111,8 +111,7 @@ export async function POST(request: Request) {
 
   const resend = new Resend(apiKey);
   const ctaBaseUrl =
-    normalizeSiteUrl(process.env.SITE_URL ?? "") ??
-    normalizeSiteUrl(process.env.NEXT_PUBLIC_SITE_URL ?? "");
+    normalizeSiteUrl(process.env.FOUNDATHON_NEXT_PUBLIC_SITE_URL ?? "");
 
   try {
     const subject =

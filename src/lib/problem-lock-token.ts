@@ -32,7 +32,7 @@ type VerifyProblemLockTokenResult =
   | { error: string; valid: false };
 
 const getSecret = (providedSecret?: string) => {
-  const secret = providedSecret ?? process.env.PROBLEM_LOCK_TOKEN_SECRET;
+  const secret = providedSecret ?? process.env.FOUNDATHON_PROBLEM_LOCK_TOKEN_SECRET;
   if (!secret) {
     throw new Error("PROBLEM_LOCK_TOKEN_SECRET is not configured.");
   }

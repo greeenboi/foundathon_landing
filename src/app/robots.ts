@@ -1,9 +1,7 @@
 import type { MetadataRoute } from "next";
 
 const BASE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ??
-  process.env.SITE_URL ??
-  "https://foundathon.thefoundersclub.tech";
+  process.env.FOUNDATHON_NEXT_PUBLIC_SITE_URL ?? "";
 
 export default function robots(): MetadataRoute.Robots {
   return {
