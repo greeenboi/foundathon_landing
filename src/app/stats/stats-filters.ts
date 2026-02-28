@@ -113,7 +113,7 @@ const normalizeDateRange = ({
 export const parseStatsQueryInput = (
   params: RawStatsQuery,
 ): StatsQueryInput => {
-  const view = parseStatsView(params.view);
+  const view = parseStatsView(toSingleSearchParam(params.view));
   const from = parseDateFilter(params.from);
   const to = parseDateFilter(params.to);
   const normalizedRange = normalizeDateRange({ from, to });

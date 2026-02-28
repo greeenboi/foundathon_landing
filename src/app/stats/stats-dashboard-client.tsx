@@ -101,8 +101,8 @@ const buildExportHref = ({
 };
 
 const getViewDescription = (view: StatsView) =>
-  STATS_VIEWS.find((entry) => entry.id === view)?.description ??
-  "Analytics view";
+  STATS_VIEWS.find((entry: (typeof STATS_VIEWS)[number]) => entry.id === view)
+    ?.description ?? "Analytics view";
 
 const StatsDashboardClient = ({
   generatedAtLabel,

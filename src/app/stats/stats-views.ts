@@ -1,10 +1,23 @@
+export const STATS_VIEW_IDS = [
+  "overview",
+  "registrations",
+  "statements",
+  "submissions",
+  "approvals",
+  "institutions",
+  "quality",
+  "exports",
+] as const;
+
+export type StatsView = (typeof STATS_VIEW_IDS)[number];
+
 export type StatsViewConfig = {
   description: string;
   id: StatsView;
   label: string;
 };
 
-export const STATS_VIEWS = [
+export const STATS_VIEWS: readonly StatsViewConfig[] = [
   {
     description: "Executive KPI snapshot and high-level performance.",
     id: "overview",
@@ -45,9 +58,7 @@ export const STATS_VIEWS = [
     id: "exports",
     label: "Exports",
   },
-] as const satisfies readonly StatsViewConfig[];
-
-export type StatsView = (typeof STATS_VIEWS)[number]["id"];
+];
 
 export const STATS_DEFAULT_VIEW: StatsView = "overview";
 

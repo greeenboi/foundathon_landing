@@ -1,7 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { ResponsiveContainer, Tooltip, type TooltipProps } from "recharts";
+import {
+  ResponsiveContainer,
+  Tooltip,
+  type TooltipContentProps,
+  type TooltipPayloadEntry,
+} from "recharts";
 import type {
   NameType,
   ValueType,
@@ -60,9 +65,13 @@ ChartContainer.displayName = "ChartContainer";
 
 export const ChartTooltip = Tooltip;
 
-type ChartTooltipContentProps = TooltipProps<ValueType, NameType> & {
+type ChartTooltipContentProps = Partial<
+  TooltipContentProps<ValueType, NameType>
+> & {
   className?: string;
 };
+
+type ChartTooltipEntry = TooltipPayloadEntry<ValueType, NameType>;
 
 export const ChartTooltipContent = ({
   active,
@@ -90,7 +99,7 @@ export const ChartTooltipContent = ({
         </p>
       ) : null}
       <div className="mt-1 space-y-1.5">
-        {payload.map((entry) => (
+        {payload.map((entry: ChartTooltipEntry) => (
           <div
             key={`${entry.dataKey}-${entry.name}`}
             className="flex items-center justify-between gap-3 text-sm"
