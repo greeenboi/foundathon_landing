@@ -35,6 +35,7 @@ export const DASHBOARD_QUICK_RULES = [
   "Each team can choose only one problem statement (limited slots per track); changes require organizer approval.",
   "No plagiarism or cheating; only registered members can work on the project.",
   "Follow submission timelines strictly; late submissions will not be accepted.",
+  "Submissions must strictly use the provided PPT template; external PPTs will be rejected.",
   "Winners may receive certificates, internships, or cash prizes; organizer decisions are final and rules may be modified if required.",
 ] as const;
 

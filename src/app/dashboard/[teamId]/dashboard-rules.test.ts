@@ -13,8 +13,8 @@ describe("dashboard event details content", () => {
     );
   });
 
-  it("includes six quick rule summaries", () => {
-    expect(DASHBOARD_QUICK_RULES).toHaveLength(6);
+  it("includes seven quick rule summaries", () => {
+    expect(DASHBOARD_QUICK_RULES).toHaveLength(7);
   });
 
   it("keeps nine ordered detailed rule sections", () => {
