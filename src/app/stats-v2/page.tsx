@@ -1,17 +1,17 @@
 import { timingSafeEqual } from "node:crypto";
 import { notFound } from "next/navigation";
-import { parseStatsQueryInput } from "@/app/stats/stats-filters";
+import { parseStatsV2QueryInput } from "@/app/stats-v2/stats-v2-filters";
 import { getFoundathonStatsPageKey } from "@/server/env";
 import {
-  getRegistrationStats,
-  type ServiceFailure,
-} from "@/server/registration-stats/service";
-import StatsDashboardClient from "./stats-dashboard-client";
+  getRegistrationStatsV2,
+  type ServiceFailureV2,
+} from "@/server/registration-stats/service-v2";
+import StatsV2DashboardClient from "./stats-v2-dashboard-client";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-type StatsPageProps = {
+type StatsV2PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
@@ -82,7 +82,7 @@ const getStatsErrorHelp = (error: string): StatsErrorHelp => {
       quickChecks: [
         "Verify eventsregistrations table exists in the connected Supabase project",
         "Verify runtime keys point to the intended Supabase URL/project",
-        "Check Supabase logs for failed query details while loading /stats",
+        "Check Supabase logs for failed query details while loading /stats-v2",
       ],
     };
   }
@@ -96,12 +96,12 @@ const getStatsErrorHelp = (error: string): StatsErrorHelp => {
     quickChecks: [
       "Review server console logs for this request",
       "Confirm Doppler/runtime variables are loaded into the Next process",
-      "Call /api/stats/registrations with x-foundathon-stats-key to compare behavior",
+      "Call /api/stats/registrations/v2 with x-foundathon-stats-key to compare behavior",
     ],
   };
 };
 
-const StatsErrorView = ({ error }: { error: ServiceFailure }) => {
+const StatsV2ErrorView = ({ error }: { error: ServiceFailureV2 }) => {
   const help = getStatsErrorHelp(error.error);
 
   return (
@@ -109,7 +109,7 @@ const StatsErrorView = ({ error }: { error: ServiceFailure }) => {
       <div className="fncontainer relative py-16">
         <section className="mx-auto max-w-3xl rounded-2xl border border-b-4 border-fnred bg-background p-8 shadow-xl">
           <h1 className="text-2xl font-black uppercase tracking-tight text-fnred">
-            Stats Unavailable
+            Stats V2 Unavailable
           </h1>
           <p className="mt-2 text-sm font-bold uppercase tracking-wider text-fnred/90">
             {help.headline}
@@ -145,7 +145,7 @@ const StatsErrorView = ({ error }: { error: ServiceFailure }) => {
   );
 };
 
-export default async function StatsPage({ searchParams }: StatsPageProps) {
+export default async function StatsV2Page({ searchParams }: StatsV2PageProps) {
   const params = await searchParams;
   const providedKey = toSingleSearchParam(params.key)?.trim();
   const expectedKey = getFoundathonStatsPageKey()?.trim();
@@ -158,17 +158,17 @@ export default async function StatsPage({ searchParams }: StatsPageProps) {
     notFound();
   }
 
-  const query = parseStatsQueryInput(params);
-  const result = await getRegistrationStats(query);
+  const query = parseStatsV2QueryInput(params);
+  const result = await getRegistrationStatsV2(query);
   if (!result.ok) {
-    return <StatsErrorView error={result} />;
+    return <StatsV2ErrorView error={result} />;
   }
 
   return (
-    <StatsDashboardClient
+    <StatsV2DashboardClient
       generatedAtLabel={formatGeneratedAt(result.data.generatedAt)}
-      statsKey={providedKey}
       stats={result.data}
+      statsKey={providedKey}
     />
   );
 }

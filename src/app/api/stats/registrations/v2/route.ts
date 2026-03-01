@@ -1,9 +1,9 @@
 import { timingSafeEqual } from "node:crypto";
 import type { NextRequest } from "next/server";
-import { parseStatsQueryInputFromUrl } from "@/app/stats/stats-filters";
+import { parseStatsV2QueryInputFromUrl } from "@/app/stats-v2/stats-v2-filters";
 import { getFoundathonStatsApiKey } from "@/server/env";
 import { jsonError, jsonNoStore } from "@/server/http/response";
-import { getRegistrationStats } from "@/server/registration-stats/service";
+import { getRegistrationStatsV2 } from "@/server/registration-stats/service-v2";
 
 const STATS_KEY_HEADER = "x-foundathon-stats-key";
 
@@ -41,8 +41,8 @@ export async function GET(request: NextRequest) {
     return jsonError("Unauthorized", 401);
   }
 
-  const query = parseStatsQueryInputFromUrl(request.nextUrl.searchParams);
-  const result = await getRegistrationStats(query);
+  const query = parseStatsV2QueryInputFromUrl(request.nextUrl.searchParams);
+  const result = await getRegistrationStatsV2(query);
   if (!result.ok) {
     return jsonError(result.error, result.status);
   }

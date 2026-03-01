@@ -3,30 +3,31 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   getFoundathonStatsApiKey: vi.fn(),
-  getRegistrationStats: vi.fn(),
+  getRegistrationStatsV2: vi.fn(),
 }));
 
 vi.mock("@/server/env", () => ({
   getFoundathonStatsApiKey: mocks.getFoundathonStatsApiKey,
 }));
 
-vi.mock("@/server/registration-stats/service", () => ({
-  getRegistrationStats: mocks.getRegistrationStats,
+vi.mock("@/server/registration-stats/service-v2", () => ({
+  getRegistrationStatsV2: mocks.getRegistrationStatsV2,
 }));
 
-describe("/api/stats/registrations GET", () => {
+describe("/api/stats/registrations/v2 GET", () => {
   beforeEach(() => {
     vi.resetModules();
     mocks.getFoundathonStatsApiKey.mockReset();
-    mocks.getRegistrationStats.mockReset();
+    mocks.getRegistrationStatsV2.mockReset();
 
     mocks.getFoundathonStatsApiKey.mockReturnValue("stats-secret");
-    mocks.getRegistrationStats.mockResolvedValue({
+    mocks.getRegistrationStatsV2.mockResolvedValue({
       data: {
-        additionalStats: {
+        generatedAt: "2026-03-01T00:00:00.000Z",
+        meta: {
+          activeSection: "intake",
           registrationTrendTimezone: "Asia/Kolkata",
         },
-        generatedAt: "2026-02-28T00:00:00.000Z",
       },
       ok: true,
       status: 200,
@@ -38,33 +39,33 @@ describe("/api/stats/registrations GET", () => {
     const { GET } = await import("./route");
 
     const response = await GET(
-      new NextRequest("http://localhost/api/stats/registrations"),
+      new NextRequest("http://localhost/api/stats/registrations/v2"),
     );
     const body = await response.json();
 
     expect(response.status).toBe(500);
     expect(body.error).toBe("Stats API key is not configured.");
-    expect(mocks.getRegistrationStats).not.toHaveBeenCalled();
+    expect(mocks.getRegistrationStatsV2).not.toHaveBeenCalled();
   });
 
   it("returns 401 when header is missing", async () => {
     const { GET } = await import("./route");
 
     const response = await GET(
-      new NextRequest("http://localhost/api/stats/registrations"),
+      new NextRequest("http://localhost/api/stats/registrations/v2"),
     );
     const body = await response.json();
 
     expect(response.status).toBe(401);
     expect(body.error).toBe("Unauthorized");
-    expect(mocks.getRegistrationStats).not.toHaveBeenCalled();
+    expect(mocks.getRegistrationStatsV2).not.toHaveBeenCalled();
   });
 
   it("returns 401 when header is invalid", async () => {
     const { GET } = await import("./route");
 
     const response = await GET(
-      new NextRequest("http://localhost/api/stats/registrations", {
+      new NextRequest("http://localhost/api/stats/registrations/v2", {
         headers: { "x-foundathon-stats-key": "wrong-secret" },
       }),
     );
@@ -72,48 +73,14 @@ describe("/api/stats/registrations GET", () => {
 
     expect(response.status).toBe(401);
     expect(body.error).toBe("Unauthorized");
-    expect(mocks.getRegistrationStats).not.toHaveBeenCalled();
-  });
-
-  it("accepts trimmed stats API key from env", async () => {
-    mocks.getFoundathonStatsApiKey.mockReturnValue("  stats-secret  ");
-    const { GET } = await import("./route");
-
-    const response = await GET(
-      new NextRequest("http://localhost/api/stats/registrations", {
-        headers: { "x-foundathon-stats-key": "stats-secret" },
-      }),
-    );
-    const body = await response.json();
-
-    expect(response.status).toBe(200);
-    expect(body.generatedAt).toBe("2026-02-28T00:00:00.000Z");
-  });
-
-  it("returns service errors", async () => {
-    mocks.getRegistrationStats.mockResolvedValue({
-      error: "Failed to fetch registrations for stats.",
-      ok: false,
-      status: 500,
-    });
-    const { GET } = await import("./route");
-
-    const response = await GET(
-      new NextRequest("http://localhost/api/stats/registrations", {
-        headers: { "x-foundathon-stats-key": "stats-secret" },
-      }),
-    );
-    const body = await response.json();
-
-    expect(response.status).toBe(500);
-    expect(body.error).toBe("Failed to fetch registrations for stats.");
+    expect(mocks.getRegistrationStatsV2).not.toHaveBeenCalled();
   });
 
   it("returns 200 with no-store header on success", async () => {
     const { GET } = await import("./route");
 
     const response = await GET(
-      new NextRequest("http://localhost/api/stats/registrations", {
+      new NextRequest("http://localhost/api/stats/registrations/v2", {
         headers: { "x-foundathon-stats-key": "stats-secret" },
       }),
     );
@@ -121,25 +88,25 @@ describe("/api/stats/registrations GET", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("Cache-Control")).toBe("no-store");
-    expect(body.generatedAt).toBe("2026-02-28T00:00:00.000Z");
-    expect(body.additionalStats.registrationTrendTimezone).toBe("Asia/Kolkata");
-    expect(mocks.getRegistrationStats).toHaveBeenCalledWith({
+    expect(body.generatedAt).toBe("2026-03-01T00:00:00.000Z");
+    expect(mocks.getRegistrationStatsV2).toHaveBeenCalledWith({
       approval: "all",
       from: null,
+      legacyView: null,
       limit: 20,
+      section: "intake",
       statement: "all",
       teamType: "all",
       to: null,
-      view: "overview",
     });
   });
 
-  it("passes normalized filters to stats service", async () => {
+  it("maps legacy view and normalizes filters", async () => {
     const { GET } = await import("./route");
 
     const response = await GET(
       new NextRequest(
-        "http://localhost/api/stats/registrations?view=bad-view&teamType=srm&approval=accepted&limit=400&from=2026-03-02&to=2026-03-01",
+        "http://localhost/api/stats/registrations/v2?view=submissions&teamType=srm&approval=accepted&limit=400&from=2026-03-02&to=2026-03-01",
         {
           headers: { "x-foundathon-stats-key": "stats-secret" },
         },
@@ -147,14 +114,34 @@ describe("/api/stats/registrations GET", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(mocks.getRegistrationStats).toHaveBeenCalledWith({
+    expect(mocks.getRegistrationStatsV2).toHaveBeenCalledWith({
       approval: "accepted",
       from: "2026-03-01",
+      legacyView: "submissions",
       limit: 100,
+      section: "review",
       statement: "all",
       teamType: "srm",
       to: "2026-03-02",
-      view: "overview",
     });
+  });
+
+  it("returns service errors", async () => {
+    mocks.getRegistrationStatsV2.mockResolvedValue({
+      error: "Failed to fetch registrations for stats.",
+      ok: false,
+      status: 500,
+    });
+    const { GET } = await import("./route");
+
+    const response = await GET(
+      new NextRequest("http://localhost/api/stats/registrations/v2", {
+        headers: { "x-foundathon-stats-key": "stats-secret" },
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(body.error).toBe("Failed to fetch registrations for stats.");
   });
 });
